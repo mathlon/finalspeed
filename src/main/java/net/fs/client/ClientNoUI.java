@@ -13,38 +13,26 @@ import java.net.URLDecoder;
 
 public class ClientNoUI implements ClientUII {
 
-	MapClient mapClient;
+	private MapClient mapClient;
 
-	ClientConfig config = null;
+	private ClientConfig config = null;
 
-	String configFilePath = new File(URLDecoder.decode(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent() + System.getProperty("file.separator") + "client_config.json";
-
-	String domain = "";
-
-	String homeUrl;
+	private String configFilePath = new File(URLDecoder.decode(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8")).getParent() + System.getProperty("file.separator") + "client_config.json";
 
 	public static ClientNoUI ui;
 
-	MapRuleListModel model;
+	private boolean b1 = false;
 
-	Exception capException = null;
+	private boolean success_firewall_windows = true;
 
-	boolean b1 = false;
+	private boolean success_firewall_osx = true;
 
-	boolean success_firewall_windows = true;
+	private String systemName = null;
 
-	boolean success_firewall_osx = true;
+	private boolean osx_fw_pf = false;
 
-	String systemName = null;
+	private boolean osx_fw_ipfw = false;
 
-	public boolean osx_fw_pf = false;
-
-	public boolean osx_fw_ipfw = false;
-
-    {
-		domain = "ip4a.com";
-		homeUrl = "http://www.ip4a.com/?client_fs";
-	}
 
 	ClientNoUI() throws UnsupportedEncodingException {
 		systemName = System.getProperty("os.name").toLowerCase();
@@ -52,7 +40,6 @@ public class ClientNoUI implements ClientUII {
 		ui = this;
 		checkQuanxian();
 		loadConfig();
-		model = new MapRuleListModel();
 		updateUISpeed(0, 0, 0);
 		setMessage(" ");
 		boolean tcpEnvSuccess=true;
@@ -68,17 +55,15 @@ public class ClientNoUI implements ClientUII {
 			//System.exit(0);
 		}
 
-		Thread thread = new Thread() {
-			public void run() {
-				try {
-					Pcaps.findAllDevs();
-					b1 = true;
-				} catch (Exception e3) {
-					e3.printStackTrace();
+		Thread thread = new Thread(() -> {
+            try {
+                Pcaps.findAllDevs();
+                b1 = true;
+            } catch (Exception e3) {
+                e3.printStackTrace();
 
-				}
-			}
-		};
+            }
+        });
 		thread.start();
 		try {
 			thread.join();
@@ -92,7 +77,6 @@ public class ClientNoUI implements ClientUII {
 			mapClient = new MapClient(this,tcpEnvSuccess);
 		} catch (final Exception e1) {
 			e1.printStackTrace();
-			capException = e1;
 			//System.exit(0);
 		}
 		mapClient.setUi(this);
@@ -101,79 +85,73 @@ public class ClientNoUI implements ClientUII {
 		setSpeed(config.getDownloadSpeed(), config.getUploadSpeed());
 	}
 
-	void checkFireWallOn() {
+	private void checkFireWallOn() {
 		if (systemName.contains("os x")) {
 			String runFirewall = "ipfw";
 			try {
-				final Process p = Runtime.getRuntime().exec(runFirewall, null);
+				Runtime.getRuntime().exec(runFirewall, null);
 				osx_fw_ipfw = true;
 			} catch (IOException e) {
 				//e.printStackTrace();
 			}
 			runFirewall = "pfctl";
 			try {
-				final Process p = Runtime.getRuntime().exec(runFirewall, null);
+				Runtime.getRuntime().exec(runFirewall, null);
 				osx_fw_pf = true;
 			} catch (IOException e) {
 				// e.printStackTrace();
 			}
 			success_firewall_osx = osx_fw_ipfw | osx_fw_pf;
-		} else if (systemName.contains("linux")) {
-			String runFirewall = "service iptables start";
 		} else if (systemName.contains("windows")) {
 			String runFirewall = "netsh advfirewall set allprofiles state on";
 			Thread standReadThread = null;
 			Thread errorReadThread = null;
 			try {
 				final Process p = Runtime.getRuntime().exec(runFirewall, null);
-				standReadThread = new Thread() {
-					public void run() {
-						InputStream is = p.getInputStream();
-						BufferedReader localBufferedReader = new BufferedReader(new InputStreamReader(is));
-						while (true) {
-							String line;
-							try {
-								line = localBufferedReader.readLine();
-								if (line == null) {
-									break;
-								} else {
-									if (line.contains("Windows")) {
-										success_firewall_windows = false;
-									}
-								}
-							} catch (IOException e) {
-								e.printStackTrace();
-								//error();
-								exit();
-								break;
-							}
-						}
-					}
-				};
+				standReadThread = new Thread(() -> {
+                    InputStream is = p.getInputStream();
+                    BufferedReader localBufferedReader = new BufferedReader(new InputStreamReader(is));
+                    while (true) {
+                        String line;
+                        try {
+                            line = localBufferedReader.readLine();
+                            if (line == null) {
+                                break;
+                            } else {
+                                if (line.contains("Windows")) {
+                                    success_firewall_windows = false;
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            //error();
+                            exit();
+                            break;
+                        }
+                    }
+                });
 				standReadThread.start();
 
-				errorReadThread = new Thread() {
-					public void run() {
-						InputStream is = p.getErrorStream();
-						BufferedReader localBufferedReader = new BufferedReader(new InputStreamReader(is));
-						while (true) {
-							String line;
-							try {
-								line = localBufferedReader.readLine();
-								if (line == null) {
-									break;
-								} else {
-									System.out.println("error" + line);
-								}
-							} catch (IOException e) {
-								e.printStackTrace();
-								//error();
-								exit();
-								break;
-							}
-						}
-					}
-				};
+				errorReadThread = new Thread(() -> {
+                    InputStream is = p.getErrorStream();
+                    BufferedReader localBufferedReader = new BufferedReader(new InputStreamReader(is));
+                    while (true) {
+                        String line;
+                        try {
+                            line = localBufferedReader.readLine();
+                            if (line == null) {
+                                break;
+                            } else {
+                                System.out.println("error" + line);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            //error();
+                            exit();
+                            break;
+                        }
+                    }
+                });
 				errorReadThread.start();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -199,9 +177,9 @@ public class ClientNoUI implements ClientUII {
 
 	}
 
-	void checkQuanxian() {
+	private void checkQuanxian() {
 		if (systemName.contains("windows")) {
-			boolean b = false;
+			boolean b;
 			File file = new File(System.getenv("WINDIR") + "\\test.file");
 			//System.out.println("kkkkkkk "+file.getAbsolutePath());
 			try {
@@ -223,7 +201,7 @@ public class ClientNoUI implements ClientUII {
 
 
 
-    void setSpeed(int downloadSpeed, int uploadSpeed) {
+    private void setSpeed(int downloadSpeed, int uploadSpeed) {
 		config.setDownloadSpeed(downloadSpeed);
 		config.setUploadSpeed(uploadSpeed);
 		Route.localDownloadSpeed = downloadSpeed;
@@ -231,11 +209,11 @@ public class ClientNoUI implements ClientUII {
 	}
 
 
-	void exit() {
+	private void exit() {
 		System.exit(0);
 	}
 
-	ClientConfig loadConfig() {
+	private void loadConfig() {
 		ClientConfig cfg = new ClientConfig();
 		if (!new File(configFilePath).exists()) {
 			JSONObject json = new JSONObject();
@@ -277,7 +255,6 @@ public class ClientNoUI implements ClientUII {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return cfg;
 	}
 
 

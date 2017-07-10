@@ -47,7 +47,7 @@ public class PortMapProcess implements ClientProcessorInterface{
 		try {
 			srcIs = new DataInputStream(srcSocket.getInputStream());
 			srcOs=new DataOutputStream(srcSocket.getOutputStream());
-			conn = route.getConnection(serverAddress, serverPort,null);
+			conn = route.getConnection(serverAddress, serverPort);
 			tis=conn.uis;
 			tos=conn.uos;
 
@@ -56,7 +56,7 @@ public class PortMapProcess implements ClientProcessorInterface{
 			requestJson.put("dst_port", dstPort);
 			byte[] requestData=requestJson.toJSONString().getBytes("utf-8");
 			
-			tos.write(requestData, 0, requestData.length);
+			tos.write(requestData, requestData.length);
 
 
 			final Pipe p1=new Pipe();

@@ -25,7 +25,7 @@ public class UDPInputStream {
 		byte[] b2=null;
 		b2 = read2();
 		if(len<b2.length){
-			throw new ConnectException("error5");
+			throw new ConnectException();
 		}else{
 			System.arraycopy(b2, 0, b, off, b2.length);
 			return b2.length;

@@ -4,11 +4,6 @@ package net.fs.client;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import net.fs.rudp.ConnectionUDP;
 import net.fs.rudp.UDPInputStream;
@@ -45,7 +40,7 @@ public class Pipe {
 			if(!sendeda){
 				sendeda=true;
 			}
-			tos.write(buf, 0, len);
+			tos.write(buf, len);
 		}
 	}
 	

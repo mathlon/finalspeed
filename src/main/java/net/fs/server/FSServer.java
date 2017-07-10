@@ -4,7 +4,6 @@
 
 package net.fs.server;
 
-import net.fs.rudp.ConnectionProcessor;
 import net.fs.rudp.Route;
 import net.fs.utils.MLog;
 
@@ -13,17 +12,13 @@ import java.net.BindException;
 
 public class FSServer {
 
-    ConnectionProcessor imTunnelProcessor;
+    private Route route;
 
-    Route route_udp, route_tcp, route;
+    private int routePort = 150;
 
-    int routePort = 150;
+    private String systemName = System.getProperty("os.name").toLowerCase();
 
-    static FSServer udpServer;
-
-    String systemName = System.getProperty("os.name").toLowerCase();
-
-    boolean success_firewall_windows = true;
+    private boolean success_firewall_windows = true;
 
     public static void main(String[] args) {
         try {
@@ -38,23 +33,17 @@ public class FSServer {
         }
     }
 
-    static FSServer get() {
-        return udpServer;
-    }
-
-    public FSServer() throws Exception {
+    private FSServer() throws Exception {
         MLog.info("");
         MLog.info("FinalSpeed server starting... ");
         MLog.info("System Name: " + systemName);
-        udpServer = this;
-        final MapTunnelProcessor mp = new MapTunnelProcessor();
 
-        String port_s = readFileData("./cnf/listen_port");
+        String port_s = readFileData();
         if (port_s != null && !port_s.trim().equals("")) {
             port_s = port_s.replaceAll("\n", "").replaceAll("\r", "");
             routePort = Integer.parseInt(port_s);
         }
-        route_udp = new Route(mp.getClass().getName(), (short) routePort, Route.mode_server, false, true);
+//        Route route_udp = new Route(mp.getClass().getName(), (short) routePort, Route.mode_server, false, true);
         if (systemName.equals("linux")) {
             startFirewall_linux();
             setFireWall_linux_udp();
@@ -64,7 +53,6 @@ public class FSServer {
 
         Route.es.execute(() -> {
             try {
-                route_tcp = new Route(mp.getClass().getName(), (short) routePort, Route.mode_server, true, true);
                 if (systemName.equals("linux")) {
                     setFireWall_linux_tcp();
                 } else if (systemName.contains("windows")) {
@@ -285,8 +273,6 @@ public class FSServer {
                                 String n = line.substring(0, index);
                                 try {
                                     if (row_delect < 0) {
-                                        // System.out.println("standaaabbb
-                                        // "+line);
                                         row_delect = Integer.parseInt(n);
                                     }
                                 } catch (Exception e) {
@@ -368,12 +354,12 @@ public class FSServer {
         }
     }
 
-    String readFileData(String path) {
+    private String readFileData() {
         String content = null;
-        FileInputStream fis = null;
+        FileInputStream fis;
         DataInputStream dis = null;
         try {
-            File file = new File(path);
+            File file = new File("./cnf/listen_port");
             fis = new FileInputStream(file);
             dis = new DataInputStream(fis);
             byte[] data = new byte[(int) file.length()];
@@ -391,10 +377,6 @@ public class FSServer {
             }
         }
         return content;
-    }
-
-    public int getRoutePort() {
-        return routePort;
     }
 
 }

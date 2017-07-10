@@ -670,7 +670,7 @@ public class ClientUI implements ClientUII, WindowListener {
          return server_addressTxt;
     }
 
-    void checkFireWallOn() {
+    private void checkFireWallOn() {
         if (systemName.contains("os x")) {
             String runFirewall = "ipfw";
             try {
